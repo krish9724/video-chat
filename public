@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Chat</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Video Chat</h1>
+    </header>
+    <div class="main-container">
+        <div class="video-container">
+            <video id="localVideo" autoplay muted></video>
+            <video id="remoteVideo" autoplay></video>
+        </div>
+        <div class="chatbox">
+            <div id="chatMessages"></div>
+            <div class="input-container">
+                <textarea id="chatInput" placeholder="Type your message..."></textarea>
+                <button onclick="sendMessage()"><img src="send-icon.png" alt="Send"></button>
+            </div>
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+<style>body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #007bff;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+}
+
+.main-container {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    height: 100vh;
+}
+
+.video-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+video {
+    width: 100%;
+    max-width: 400px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.chatbox {
+    width: 300px;
+    background-color: #f9f9f9;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#chatMessages {
+    height: 500px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.input-container {
+    display: flex;
+    align-items: center;
+}
+
+textarea {
+    width: calc(100% - 30px);
+    height: 50px;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    cursor: pointer;
+}
+
+button img {
+    width: 20px;
+    height: 20px;
+}
+</style>
+<script>
+    const localVideo = document.getElementById('localVideo');
+const remoteVideo = document.getElementById('remoteVideo');
+
+let localStream;
+let peerConnection;
+
+// Socket.io connection
+const socket = io();
+
+// STUN server configuration
+const config = {
+    iceServers: [
+        {
+            urls: 'stun:stun.l.google.com:19302' // Public STUN server
+        }
+    ]
+};
+
+// Function to start the video chat
+async function startVideoChat() {
+    try {
+        // Get local media stream
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        localVideo.srcObject = localStream;
+
+        // Create an RTCPeerConnection
+        peerConnection = new RTCPeerConnection(config);
+
+        // Add local stream tracks to the peer connection
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+        // Event handler to receive remote stream
+        peerConnection.ontrack = event => {
+            remoteVideo.srcObject = event.streams[0];
+        };
+
+        // Handle ICE candidates
+        peerConnection.onicecandidate = event => {
+            if (event.candidate) {
+                socket.emit('candidate', event.candidate);
+            }
+        };
+
+        // Create an offer and set local description
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        // Send the offer to the signaling server
+        socket.emit('offer', offer);
+    } catch (error) {
+        console.error('Error starting video chat:', error);
+    }
+}
+
+// Receive an offer from another peer
+socket.on('offer', async offer => {
+    if (!peerConnection) {
+        await startVideoChat();
+    }
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+    const answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+    socket.emit('answer', answer);
+});
+
+// Receive an answer from another peer
+socket.on('answer', async answer => {
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+});
+
+// Receive ICE candidates
+socket.on('candidate', async candidate => {
+    try {
+        await peerConnection.addIceCandidate(candidate);
+    } catch (error) {
+        console.error('Error adding received ICE candidate', error);
+    }
+});
+
+// Chat functionality (optional)
+function sendMessage() {
+    const chatInput = document.getElementById('chatInput');
+    const message = chatInput.value;
+    chatInput.value = '';
+    displayMessage('Me', message);
+    socket.emit('chatMessage', message);
+}
+
+function displayMessage(sender, message) {
+    const chatMessages = document.getElementById('chatMessages');
+    const messageElement = document.createElement('div');
+    messageElement.textContent = `${sender}: ${message}`;
+    chatMessages.appendChild(messageElement);
+}
+
+// Receive chat messages
+socket.on('chatMessage', message => {
+    displayMessage('Other', message);
+});
+
+// Call the startVideoChat function when the page loads
+startVideoChat();
+
+</script>
+</body>
+</html>
