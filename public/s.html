@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issue-Based Video Chat</title>
+    <style>
+        /* General styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #444;
+        }
+        .hidden {
+            display: none;
+        }
+
+        /* Form styles */
+        .form-container {
+            background: #fff;
+            padding: 30px; /* Increased padding for a larger appearance */
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+            transition: transform 0.3s ease; /* Add transition for smooth transformation */
+        }
+        .form-container:hover {
+            transform: scale(1.05); /* Scale up on hover for a cleaner look */
+        }
+        .form-container h2 {
+            margin-top: 0;
+        }
+        .form-container input, .form-container select, .form-container textarea {
+            width: calc(100% - 20px); /* Adjusted width to match padding */
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .form-container textarea {
+            height: 80px;
+            resize: none;
+        }
+        .form-container button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .form-container button:hover {
+            background: #0056b3;
+        }
+
+        /* Video chat styles */
+        .main-container {
+            width: 100%;
+            max-width: 800px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .video-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .video-box {
+            width: 48%;
+        }
+        video {
+            width: 100%;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            background: #000;
+        }
+        .chatbox {
+            margin-top: 20px;
+        }
+        #chatMessages {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+        }
+        .input-container {
+            display: flex;
+            align-items: center;
+        }
+        .input-container textarea {
+            flex: 1;
+            margin-right: 10px;
+        }
+        .input-container button {
+            padding: 10px 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <h2>What's Your Depression?</h2>
+            <input type="text" id="usernameInput" placeholder="Your name" required>
+            <label for="issueSelect">Select situation:</label>
+            <select id="issueSelect" required>
+                <option value="" selected disabled>Select situation</option>
+                <option value="loneliness">Loneliness</option>
+                <option value="relationship">Relationship Problem</option>
+                <option value="career">Career Issues</option>
+                <option value="family">Family Issues</option>
+                <option value="motivation">Lack of Motivation</option>
+                <option value="stress">Stress</option>
+            </select>
+            <textarea id="descriptionInput" placeholder="Describe your situation" required></textarea>
+            <button onclick="startChat()">Start Video Chat</button>
+        </div>
+
+        <header class="hidden">
+            <h1>Video Chat</h1>
+        </header>
+
+        <div class="main-container hidden">
+            <div class="video-container">
+                <div class="video-box">
+                    <video id="localVideo" autoplay muted></video>
+                </div>
+                <div class="video-box">
+                    <video id="remoteVideo" autoplay></video>
+                </div>
+            </div>
+
+            <div class="chatbox">
+                <h2>Chat</h2>
+                <div id="chatMessages"></div>
+                <div class="input-container">
+                    <textarea id="chatInput" placeholder="Type your message..."></textarea>
+                    <button id="sendButton" onclick="sendMessage()">
+                    <img src="https://cdn.icon-icons.com/icons2/2838/PNG/512/mail_send_icon_180871.png" alt="Send" width="20px">
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let localStream;
+        let peerConnection;
+        let roomId;
+        let username;
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideo = document.getElementById('remoteVideo');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+
+        function startChat() {
+            username = document.getElementById('usernameInput').value.trim();
+            const description = document.getElementById('descriptionInput').value.trim();
+            const issue = document.getElementById('issueSelect').value;
+            if (username && description) {
+                socket.emit('joinRoom', { issue, username, description });
+                document.querySelector('.form-container').classList.add('hidden');
+                document.querySelector('.main-container').classList.remove('hidden');
+                document.querySelector('header').classList.remove('hidden');
+            } else {
+                alert('Please fill out all fields.');
+            }
+        }
+
+        socket.on('joinedRoom', async (room) => {
+            roomId = room.roomId;
+            await startVideoChat(room.isInitiator);
+        });
+
+        socket.on('startVideoChat', async () => {
+            if (peerConnection && peerConnection.iceConnectionState !== 'closed') return;
+            await startVideoChat(true);
+        });
+
+        async function startVideoChat(isInitiator) {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                localVideo.srcObject = localStream;
+
+                peerConnection = new RTCPeerConnection();
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+                peerConnection.ontrack = event => {
+                    remoteVideo.srcObject = event.streams[0];
+                };
+
+                peerConnection.onicecandidate = event => {
+                    if (event.candidate) {
+                        socket.emit('iceCandidate', event.candidate);
+                    }
+                };
+
+                if (isInitiator) {
+                    const offer = await peerConnection.createOffer();
+                    await peerConnection.setLocalDescription(offer);
+                    socket.emit('offer', offer);
+                }
+            } catch (error) {
+                console.error('Error starting video chat:', error);
+            }
+        }
+
+        socket.on('offer', async (offer) => {
+            if (!peerConnection || peerConnection.iceConnectionState === 'closed') {
+                await startVideoChat(false);
+            }
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            socket.emit('answer', answer);
+        });
+
+        socket.on('answer', async (answer) => {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+        });
+
+        socket.on('iceCandidate', async (candidate) => {
+            try {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+            } catch (error) {
+                console.error('Error adding ICE candidate:', error);
+            }
+        });
+
+        socket.on('chatMessage', ({ username, message }) => {
+            // Check if the message is already displayed to prevent duplication
+            const existingMessage = chatMessages.querySelector(`[data-message="${message}"]`);
+            if (!existingMessage) {
+                const messageElement = document.createElement('div');
+                messageElement.dataset.message = message; // Set a data attribute to identify unique messages
+                messageElement.innerHTML = `<strong>${username}</strong>: ${message}`;
+                chatMessages.appendChild(messageElement);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        });
+        
+        function sendMessage(message) {
+            if (message) {
+                socket.emit('chatMessage', { username, message });
+                chatInput.value = ''; // Clear the input field after sending
+
+                // Optionally, add the message directly to the chat window
+                const messageElement = document.createElement('div');
+                messageElement.dataset.message = message; // Set a data attribute to identify unique messages
+                messageElement.innerHTML = `<strong>${username}</strong>: ${message}`;
+                chatMessages.appendChild(messageElement);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        }
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage(chatInput.value.trim());
+                chatInput.value = '';
+            }
+        });
+
+        
+    </script>
+</body>
+</html>

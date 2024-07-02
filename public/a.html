@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gender Selection</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="header">
+    <h1>What's Your Gender?</h1>
+    <div class="gender-images">
+      <label class="gender-image">
+        <input type="radio" name="genderRadio" value="male" onchange="selectGender('male')">
+        <img src="https://cdn.psychologytoday.com/sites/default/files/styles/article-inline-half-caption/public/field_blog_entry_images/2022-04/avatar_victor_metelskiy_shutterstock_548848999.jpg?itok=ln32m-7E" alt="Male Dummy" id="maleBig">
+        <span>Male</span>
+      </label>
+      <label class="gender-image">
+        <input type="radio" name="genderRadio" value="female" onchange="selectGender('female')">
+        <img src="https://png.pngtree.com/element_our/20190529/ourmid/pngtree-pretty-girl-office-business-image_1232078.jpg" alt="Female Dummy" id="femaleBig">
+        <span>Female</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="depression-options">
+    <label class="option" id="depressed" onclick="openDepressionPage()">
+      <h2>Depressed</h2>
+    </label>
+    <label class="option" id="solver" onclick="opendepressionsolverpage()">
+      <h2>Depression Solver</h2>
+    </label>
+  </div>
+
+  <style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+      
+      .header {
+        background-color: #f0f0f0;
+        padding: 20px;
+        text-align: center;
+      }
+      
+      .gender-images {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+      }
+
+      .gender-image {
+        margin: 0 20px;
+        cursor: pointer;
+        position: relative;
+        text-align: center;
+      }
+
+      .gender-image img {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+      }
+
+      .gender-image span {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .depression-options {
+        text-align: center;
+        margin-top: 20px;
+      }
+      
+      .option {
+        display: inline-block;
+        margin: 10px;
+        padding: 10px;
+        border: 2px solid #ccc;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      
+      .option:hover {
+        background-color: #f0f0f0;
+      }
+  </style>
+  <script>
+    function selectGender(gender) {
+        var maleTick = document.getElementById('maleBig');
+        var femaleTick = document.getElementById('femaleBig');
+      
+        if (gender === 'male') {
+          maleTick.style.border = '2px solid blue';
+          femaleTick.style.border = 'none';
+        } else if (gender === 'female') {
+          femaleTick.style.border = '2px solid blue';
+          maleTick.style.border = 'none';
+        }
+      }
+      
+      function selectDepression(option) {
+        var depressedOption = document.getElementById('depressed');
+        var solverOption = document.getElementById('solver');
+        if (option === 'depressed') {
+          depressedOption.style.backgroundColor = '#ccc';
+          solverOption.style.backgroundColor = 'initial';
+          window.location.href = 's.html'; // Redirect to s.html
+        } else if (option === 'solver') {
+          solverOption.style.backgroundColor = '#ccc';
+          depressedOption.style.backgroundColor = 'initial';
+          window.location.href = 'n.html';
+        }
+      } 
+      function openDepressionPage() {
+        // Redirect to s.html
+        window.location.href = "s.html";
+    }
+    function opendepressionsolverpage() {
+      window.location.href = 'n.html';
+    }
+  </script>
+</body>
+</html>
