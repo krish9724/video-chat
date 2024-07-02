@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Chat</title>
+</head>
+<body>
+    <div class="prompt-container">
+        <div class="prompt-box">
+            <h2>Enter your name</h2>
+            <input type="text" id="usernameInput" placeholder="Your name">
+            <button onclick="startChat()">Start Video Chat</button>
+        </div>
+    </div>
+
+    <header class="hidden">
+        <h1>Video Chat</h1>
+    </header>
+
+    <div class="main-container hidden">
+        <div class="video-container">
+            <div class="video-box">
+                <video id="localVideo" autoplay muted></video>
+            </div>
+            <div class="video-box">
+                <video id="remoteVideo" autoplay></video>
+            </div>
+        </div>
+
+        <div class="chatbox">
+            <div class="action-buttons">
+                <button class="action-button" onclick="endCall()">
+                    <img src="https://www.freeiconspng.com/thumbs/call-end-icon/mobile-end-call-icon-9.png" alt="End Call">End Call
+                </button>
+                <button class="action-button" onclick="nextPartner()">
+                    <img src="https://png.pngtree.com/png-vector/20221009/ourmid/pngtree-arrow-next-with-design-png-image_6293375.png" alt="Next">Next
+                </button>
+            </div>
+            <h2>Chat</h2>
+            <div id="chatMessages"></div>
+            <div class="input-container">
+                <textarea id="chatInput" placeholder="Type your message..."></textarea>
+                <button id="sendButton" onclick="sendMessage()">
+                    <img src="https://cdn.icon-icons.com/icons2/2838/PNG/512/mail_send_icon_180871.png" alt="Send">
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Styling is unchanged */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        
+        header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .main-container {
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+            height: 100vh;
+        }
+        
+        .video-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        
+        .video-box {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+            position: relative;
+            background: #000;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        video {
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        
+        .video-box span {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .chatbox {
+            width: 300px;
+            background-color: #f9f9f9;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        #chatMessages {
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        
+        .input-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        #chatInput {
+            flex-grow: 1;
+            height: 50px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-right: 10px;
+            resize: none;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        button img {
+            width: 20px;
+            height: 20px;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .action-button {
+            background-color: #007bff;
+            border: none;
+            color: white;
+            padding: 10px;
+            font-size: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48%;
+        }
+
+        .action-button img {
+            width: 16px;
+            height: 16px;
+            margin-right: 5px;
+        }
+
+        .action-button:hover {
+            background-color: #0056b3;
+        }
+
+        .prompt-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.6);
+            position: absolute;
+            width: 100%;
+            z-index: 10;
+        }
+
+        .prompt-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            width: 300px;
+        }
+
+        .prompt-box input {
+            width: 95%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        .prompt-box button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .prompt-box button:hover {
+            background-color: #0056b3;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideo = document.getElementById('remoteVideo');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+
+        let localStream;
+        let remoteStream;
+        let peerConnection;
+        let username;
+
+        function startChat() {
+            username = document.getElementById('usernameInput').value.trim();
+            if (username) {
+                document.querySelector('.prompt-container').classList.add('hidden');
+                document.querySelector('.main-container').classList.remove('hidden');
+                document.querySelector('header').classList.remove('hidden');
+                socket.emit('join', { username });
+            } else {
+                alert('Please enter your name.');
+            }
+        }
+
+        async function startVideoChat() {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                localVideo.srcObject = localStream;
+
+                peerConnection = new RTCPeerConnection();
+
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+                peerConnection.ontrack = event => {
+                    if (!remoteStream) {
+                        remoteStream = new MediaStream();
+                        remoteVideo.srcObject = remoteStream;
+                    }
+                    remoteStream.addTrack(event.track);
+                };
+
+                peerConnection.onicecandidate = event => {
+                    if (event.candidate) {
+                        socket.emit('candidate', event.candidate);
+                    }
+                };
+
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+
+                socket.emit('offer', offer);
+            } catch (error) {
+                console.error('Error starting video chat:', error);
+            }
+        }
+
+        function handleNewPartner() {
+            cleanUpPeerConnection();
+            startVideoChat();
+        }
+
+        function cleanUpPeerConnection() {
+            if (peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+            if (remoteStream) {
+                remoteStream.getTracks().forEach(track => track.stop());
+                remoteStream = null;
+                remoteVideo.srcObject = null;
+            }
+        }
+
+        function endCall() {
+            socket.emit('endCall');
+            handleNewPartner();
+        }
+
+        function nextPartner() {
+            endCall();
+        }
+
+        socket.on('offer', async (offer) => {
+            if (!peerConnection) await startVideoChat();
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            socket.emit('answer', answer);
+        });
+
+        socket.on('answer', async (answer) => {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+        });
+
+        socket.on('candidate', async (candidate) => {
+            try {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+            } catch (error) {
+                console.error('Error adding received ICE candidate', error);
+            }
+        });
+
+        socket.on('chatMessage', ({ username, message }) => {
+            const messageElement = document.createElement('div');
+            messageElement.innerHTML = `<strong>${username}</strong>: ${message}`;
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+
+        socket.on('endCall', () => {
+            cleanUpPeerConnection();
+        });
+
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage(chatInput.value.trim());
+                chatInput.value = '';
+            }
+        });
+
+        function sendMessage(message) {
+            if (message) {
+                socket.emit('chatMessage', { username, message });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const usernameInput = document.getElementById('usernameInput');
+            usernameInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    startChat();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
