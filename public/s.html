@@ -276,12 +276,18 @@
             }
         });
 
-        socket.on('message', (message) => {
-            const messageElement = document.createElement('div');
-            messageElement.textContent = message;
-            chatMessages.appendChild(messageElement);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+        socket.on('chatMessage', ({ username, message }) => {
+            // Check if the message is already displayed to prevent duplication
+            const existingMessage = chatMessages.querySelector(`[data-message="${message}"]`);
+            if (!existingMessage) {
+                const messageElement = document.createElement('div');
+                messageElement.dataset.message = message; // Set a data attribute to identify unique messages
+                messageElement.innerHTML = `<strong>${username}</strong>: ${message}`;
+                chatMessages.appendChild(messageElement);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
         });
+
 
         function sendMessage() {
             const message = chatInput.value.trim();
