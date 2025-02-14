@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -79,6 +79,7 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: relative; /* Add this line for positioning buttons */
         }
         .video-container {
             display: flex;
@@ -117,6 +118,25 @@
         .input-container button {
             padding: 10px 20px;
         }
+        /* Button styles */
+        .control-button {
+            position: absolute;
+            top: 10px;
+            padding: 10px 20px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .control-button:hover {
+            background: #0056b3;
+        }
+        
+        
+        
     </style>
 </head>
 <body>
@@ -141,7 +161,6 @@
         <header class="hidden">
             <h1>Video Chat</h1>
         </header>
-
         <div class="main-container hidden">
             <div class="video-container">
                 <div class="video-box">
@@ -157,13 +176,21 @@
                 <div id="chatMessages"></div>
                 <div class="input-container">
                     <textarea id="chatInput" placeholder="Type your message..."></textarea>
-                    <button id="sendButton" onclick="sendMessage()">
-                    <img src="https://cdn.icon-icons.com/icons2/2838/PNG/512/mail_send_icon_180871.png" alt="Send" width="20px">
+                    <button id="sendButton"  onclick="sendMessage()">
+                        <img src="https://cdn.icon-icons.com/icons2/2838/PNG/512/mail_send_icon_180871.png" alt="Send" width="20px">
                     </button>
                 </div>
             </div>
         </div>
     </div>
+    <style>
+        body {
+            background-image: url('https://png.pngtree.com/background/20210710/original/pngtree-business-hand-close-up-banner-picture-image_1043210.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+    </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
     <script>
@@ -225,14 +252,12 @@
                     socket.emit('offer', offer);
                 }
             } catch (error) {
-                console.error('Error starting video chat:', error);
+                console.error('Error accessing media devices.', error);
             }
         }
 
         socket.on('offer', async (offer) => {
-            if (!peerConnection || peerConnection.iceConnectionState === 'closed') {
-                await startVideoChat(false);
-            }
+            if (!peerConnection) await startVideoChat(false);
             await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
             const answer = await peerConnection.createAnswer();
             await peerConnection.setLocalDescription(answer);
@@ -245,9 +270,9 @@
 
         socket.on('iceCandidate', async (candidate) => {
             try {
-                await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                await peerConnection.addIceCandidate(candidate);
             } catch (error) {
-                console.error('Error adding ICE candidate:', error);
+                console.error('Error adding received ice candidate', error);
             }
         });
 
@@ -262,10 +287,12 @@
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }
         });
-        
-        function sendMessage(message) {
+
+
+        function sendMessage() {
+            const message = chatInput.value.trim();
             if (message) {
-                socket.emit('chatMessage', { username, message });
+                socket.emit('chatMessage', { username, message });  // Use the stored username
                 chatInput.value = ''; // Clear the input field after sending
 
                 // Optionally, add the message directly to the chat window
@@ -276,15 +303,30 @@
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }
         }
-        chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage(chatInput.value.trim());
-                chatInput.value = '';
+
+        function endCall() {
+            if (peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+                localStream.getTracks().forEach(track => track.stop());
+                localVideo.srcObject = null;
+                remoteVideo.srcObject = null;
+                socket.emit('leaveRoom', roomId);
+                alert('Call Ended');
+            }
+        }
+
+        function nextCall() {
+            endCall();
+            startChat();
+        }
+
+        chatInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                sendMessage(chatInput.value);
             }
         });
-
-        
     </script>
 </body>
-</html>
+</html> -->
