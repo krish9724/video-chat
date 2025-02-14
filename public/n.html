@@ -169,124 +169,128 @@ video {
   background: #0056b3;
 }
 
-        /* Video chat styles */
-        .main-container {
-            width: 100%;
-            max-width: 800px;
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        .video-container {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-        .video-box {
-            width: 48%;
-        }
-        video {
-            width: 100%;
-            border-radius: 10px;
-            border: 1px solid #ddd;
-            background: #000;
-        }
-        .chatbox {
-            margin-top: 20px;
-        }
-        #chatMessages {
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 10px;
-            margin-bottom: 10px;
-            background: #f9f9f9;
-        }
-        .input-container {
-            display: flex;
-            align-items: center;
-        }
-        .input-container textarea {
-            flex: 1;
-            margin-right: 10px;
-            border-radius: 5px; /* Rounded corners for input */
-            padding: 10px;
-            border: 1px solid #ddd;
-            font-size: 16px;
-        }
-        .input-container button {
-            padding: 10px 20px;
-            background: #007bff;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-        .input-container button:hover {
-            background: #0056b3;
-        }
-    </style>
-</head>
+.status-message {
+  text-align: center;
+  padding: 10px;
+  border-radius: 5px;
+  margin: 10px 0;
+  font-weight: bold;
+}
+
+.status-message.connecting {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-message.connected {
+  background: #d4edda;
+  color: #155724;
+}
+
+@media (max-width: 768px) {
+  .video-grid {
+      grid-template-columns: 1fr;
+  }
+
+  .btn-next {
+      bottom: 20px;
+      right: 20px;
+      padding: 10px 20px;
+  }
+}
+
+.loader-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 1000;
+}
+
+.loader {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #FFF;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+.loader-text {
+  color: white;
+  font-size: 18px;
+  text-align: center;
+  margin-top: 10px;
+}
+
+@keyframes rotation {
+  0% {
+      transform: rotate(0deg);
+  }
+  100% {
+      transform: rotate(360deg);
+  }
+}
+
+.status-message.error {
+  background: #f8d7da;
+  color: #721c24;
+}
+</style>
 <body>
-    <header class="bg-green-500 py-4"> 
-        <nav class="flex justify-between items-center w-[92%] mx-auto"> 
-            <div class="w-16 font-bold text-green-700">Genesis</div> 
-            <div class="nav-links duration-500 md:static absolute md:min-h-fit min-h-[60vh] left-0 top-[-100%] md:w-auto w-full flex items-center px-5"> 
-                <ul class="flex md:flex-row flex-col md:items-center md:gap-[4vw] gap-8"> 
-                    <li><a class="hover:text-gray-500" href="#">Home</a></li> 
-                    <li><a class="hover:text-gray-500" href="#">About</a></li> 
-                    <li><a class="hover:text-gray-500" href="#">Support</a></li> 
-                    <li><a class="hover:text-gray-500" href="#">Contact Us</a></li> 
-                </ul> 
-            </div> 
-            <div class="flex items-center gap-6"> 
-                <ion-icon onclick="onToggleMenu(this)" name="menu" class="text-3xl cursor-pointer md:hidden text-white"></ion-icon> 
-            </div> 
-        </nav> 
-    </header> 
-    <script> 
-        const navLinks = document.querySelector('.nav-links');
-        function onToggleMenu(e) { 
-            e.name = e.name === 'menu' ? 'close' : 'menu'; 
-            navLinks.classList.toggle('top-[6%]'); 
-        } 
-    </script>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">TopicChat</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="currentTopic">No Topic Selected</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-    <main class="container my-5">
-        <section class="text-center mb-5">
-            <h1>Prepare Yourself to Provide Advice, Motivation, and Solve Depression</h1>
-            <p>This platform aims to improve your communication skills and help you grow while assisting others in overcoming depression.</p>
-        </section>
+    <div class="container">
+        <div id="topic-selector" class="topic-selector">
+            <h2>Choose Your Discussion Topic</h2>
+            <div class="form-group">
+                <label for="username">Your Name</label>
+                <input type="text" id="username" class="form-control" placeholder="Enter your name" required>
+            </div>
+            <div class="form-group">
+                <label for="topic">Select Topic</label>
+                <select id="topic" class="form-control" required>
+                    <option value="" disabled selected>Choose a topic</option>
+                    <option value="technology">Technology & Innovation</option>
+                    <option value="philosophy">Philosophy & Ethics</option>
+                    <option value="science">Science & Discovery</option>
+                    <option value="arts">Arts & Culture</option>
+                    <option value="society">Society & Politics</option>
+                </select>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-secondary" onclick="hideTopicSelector()">Cancel</button>
+                <button id="start-chat" class="btn btn-primary">Start Chatting</button>
+            </div>
+        </div>
 
-        <section class="form-container mb-5">
-            <h2 class="mb-3">What's Your Expertise?</h2>
-            <p>Please fill out the following form to provide information about your expertise in solving depression:</p>
-            <div class="bg-light p-4 rounded shadow-sm">
-                <div class="form-group">
-                    <label for="usernameInput">Your Name:</label>
-                    <input type="text" id="usernameInput" name="username" class="form-control" placeholder="Your name" required>
-                </div>
-                <div class="form-group">
-                    <label for="issueSelect">Select situation:</label>
-                    <select id="issueSelect" name="issue" class="form-control" required>
-                        <option value="" selected disabled>Select situation</option>
-                        <option value="loneliness">Loneliness</option>
-                        <option value="depression">Relationsheep Problem</option>
-                        <option value="career">Career Issues</option>
-                        <option value="family">Family Issues</option>
-                        <option value="motivation">Lack of Motivation</option>
-                        <option value="stress">Stress</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="descriptionInput">Describe how you solve situation (briefly):</label>
-                    <textarea id="descriptionInput" name="description" rows="4" class="form-control" placeholder="Describe (required)" required></textarea>
-                </div>
-                <button type="button" class="btn btn-warning btn-block" onclick="startChat()">Start Video Chat</button>
+        <div id="chat-room" class="chat-container" style="display: none;">
+            <div class="loader-container" id="loaderContainer" style="display: none;">
+                <span class="loader"></span>
+                <div class="loader-text">Waiting for another user to join...</div>
             </div>
             <div class="status-message" id="connectionStatus"></div>
             <div class="video-grid">
